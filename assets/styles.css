@@ -17,6 +17,10 @@ body {
     
 }
 
+.info {
+    height: 100px;
+}
+
 .player1 {
     background-color: yellow;
 }
