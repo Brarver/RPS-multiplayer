@@ -1,0 +1,43 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    height: 100%;
+    width: 100%;
+    text-align: center;
+}
+
+.player {
+    width: 50%;
+    height: 300px;
+    display: inline-block;
+    border: 1px solid black;
+    z-index: 3;
+    
+}
+
+.player1 {
+    background-color: yellow;
+}
+
+.player2 {
+    background-color: pink;
+}
+
+.item {
+    display: inline-block;
+    border: 1px solid black;
+    margin: 5px
+}
+
+.board {
+    height: 300px;
+    width: 300px;
+    border: 1px solid black;
+    margin: auto;
+    position: relative;
+    bottom: 200px;
+    z-index: 2;
+    background-color: orange;
+}
