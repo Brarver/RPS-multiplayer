@@ -23,6 +23,7 @@ var p1s = null
 var p2s = null
 var p1g = null
 var p2g = null
+var check
 
 //////////////////////////////////////Connections////////////////////////////////////////////////////////////////
 
@@ -69,6 +70,7 @@ $('#add-player').on('click', function() {
         $('.info').empty()
         $('.info').text(player2 + ' your are player 2')
         you = 'two'
+        check = true
         players.set({
             player1: player1,
             player2: player2
@@ -131,6 +133,10 @@ function renderTwo() {
 }
 
 game.on("value", function (snapshot) {
+
+    if (!snapshot.child('playerOneGuess').exists()) {
+        renderOne()
+    }
 
     if (snapshot.child('playerOneGuess').exists()) {
         p1g = snapshot.val().playerOneGuess  
@@ -225,13 +231,13 @@ function oneWins() {
     p1g = null
     p2g = null
     $('.board').text('Player One Wins!')
-    game.set({
+    setTimeout(game.set({
         playerOneGuess: p1g,
         playerTwoGuess: p2g,
         playerOneScore: p1s,
         playerTwoScore: p2s,
         ties: ties
-    })
+    }), 4000)
     
 }
 
