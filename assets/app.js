@@ -23,7 +23,7 @@ var p1s = null
 var p2s = null
 var p1g = null
 var p2g = null
-var check
+var check = false
 
 //////////////////////////////////////Connections////////////////////////////////////////////////////////////////
 
@@ -97,19 +97,20 @@ players.on('value', function(snapshot) {
 /////////////////////////////////////////game//////////////////////////////////////////////////////////////////
 
 function renderOne() {
+    check = true
     var items = ['rock', 'paper', 'scissors']
 
     if (you === 'one') {
         for (var i = 0; i < items.length; i++) {
             var div = $('<div>').addClass('item p1b')
             div.text(items[i])
-            $('.player1').append(div)
+            $('.items1').append(div)
         }
         playerOneChoose()
     }
 
     var p = $('<p>').text('waiting on player 1')
-    $('.player2').append(p)
+    $('.items2').append(p)
     
 }
 
@@ -117,24 +118,24 @@ function renderTwo() {
     var items = ['rock', 'paper', 'scissors']
 
     if (you === 'two') {
-        $('.player2').empty()
+        // $('.player2').empty()
         console.log('seal')
         for (var i = 0; i < items.length; i++) {
             var div = $('<div>').addClass('item p2b')
             div.text(items[i])
-            $('.player2').append(div)
+            $('.items2').append(div)
         }
         playerTwoChoose()
     }
     
     var p = $('<p>').text('waiting on player 2')
-    $('.player1').append(p)
+    $('items1').append(p)
     
 }
 
 game.on("value", function (snapshot) {
 
-    if (!snapshot.child('playerOneGuess').exists()) {
+    if (!snapshot.child('playerOneGuess').exists() && check) {
         renderOne()
     }
 
@@ -165,6 +166,7 @@ function playerOneChoose() {
 
     $('.p1b').on('click', (e) => {
         p1g = e.target.innerText
+
         console.log('player 1: ' + p1g)
         game.set({
             playerOneGuess: p1g,
@@ -172,7 +174,7 @@ function playerOneChoose() {
             playerOneScore: p1s,
             playerTwoScore: p2s,
             ties: ties
-        })
+        }) 
     })    
 }
 
@@ -181,6 +183,7 @@ function playerTwoChoose() {
 
     $('.p2b').on('click', (e) => {
         p2g = e.target.innerText
+        // $('.items2').empty()
         console.log('player 2: ' + p2g)
         game.set({
             playerOneGuess: p1g,
@@ -189,7 +192,7 @@ function playerTwoChoose() {
             playerTwoScore: p2s,
             ties: ties
         })
-        renderOne()
+        
     })
 }
 
@@ -231,13 +234,13 @@ function oneWins() {
     p1g = null
     p2g = null
     $('.board').text('Player One Wins!')
-    setTimeout(game.set({
+    game.set({
         playerOneGuess: p1g,
         playerTwoGuess: p2g,
         playerOneScore: p1s,
         playerTwoScore: p2s,
         ties: ties
-    }), 4000)
+    })
     
 }
 
