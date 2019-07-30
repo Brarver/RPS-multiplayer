@@ -88,7 +88,7 @@ players.on('value', function(snapshot) {
     }
 
     if (snapshot.child('player2').exists()) {
-        console.log('bear')
+        console.log('initial')
         renderOne()
     }
     
@@ -102,8 +102,10 @@ function renderOne() {
     $('.items1').empty()
     $('.items2').empty()
 
-    var p = $('<p>').text('waiting on player 1')
-    $('.items2').append(p)
+    var s = $('<div>').text('waiting on player 1')
+    // $('.items2').append(s)
+    s.appendTo('.items2')
+
     
     var items = ['rock', 'paper', 'scissors']
 
@@ -113,11 +115,10 @@ function renderOne() {
             var div = $('<div>').addClass('item p1b')
             div.text(items[i])
             $('.items1').append(div)
+            
         }
         playerOneChoose()
     }
-    
-    
 }
 
 function renderTwo() {
@@ -126,9 +127,9 @@ function renderTwo() {
     $('.items1').empty()
     $('.items2').empty()
 
-    var p = $('<p>').text('waiting on player 2')
-    $('items1').append(p)
-
+    var p = $('<div>').text('waiting on player 2')
+    // $('items1').append(p)
+    p.appendTo('.items1')
     if (you === 'two') {
         console.log('renderTwo if two')
         for (var i = 0; i < items.length; i++) {
@@ -137,9 +138,7 @@ function renderTwo() {
             $('.items2').append(div)
         }
         playerTwoChoose()
-    }
-    
-    
+    }   
 }
 
 game.on("value", function (snapshot) {
@@ -176,8 +175,6 @@ function playerOneChoose() {
     $('.p1b').on('click', (e) => {
         p1g = e.target.innerText
         console.log('playerOneChoose click')
-
-        console.log('player 1: ' + p1g)
         game.set({
             playerOneGuess: p1g,
             playerTwoGuess: p2g,
@@ -194,16 +191,13 @@ function playerTwoChoose() {
     $('.p2b').on('click', (e) => {
         console.log('playerTwoChoose click')
         p2g = e.target.innerText
-        // $('.items2').empty()
-        
         game.set({
             playerOneGuess: p1g,
             playerTwoGuess: p2g,
             playerOneScore: p1s,
             playerTwoScore: p2s,
             ties: ties
-        })
-        
+        }) 
     })
 }
 
