@@ -97,10 +97,18 @@ players.on('value', function(snapshot) {
 /////////////////////////////////////////game//////////////////////////////////////////////////////////////////
 
 function renderOne() {
+    console.log('renderOne')
     check = true
+    $('.items1').empty()
+    $('.items2').empty()
+
+    var p = $('<p>').text('waiting on player 1')
+    $('.items2').append(p)
+    
     var items = ['rock', 'paper', 'scissors']
 
     if (you === 'one') {
+        console.log('renderOne if one')
         for (var i = 0; i < items.length; i++) {
             var div = $('<div>').addClass('item p1b')
             div.text(items[i])
@@ -108,18 +116,21 @@ function renderOne() {
         }
         playerOneChoose()
     }
-
-    var p = $('<p>').text('waiting on player 1')
-    $('.items2').append(p)
+    
     
 }
 
 function renderTwo() {
+    console.log('renderTwo')
     var items = ['rock', 'paper', 'scissors']
+    $('.items1').empty()
+    $('.items2').empty()
+
+    var p = $('<p>').text('waiting on player 2')
+    $('items1').append(p)
 
     if (you === 'two') {
-        // $('.player2').empty()
-        console.log('seal')
+        console.log('renderTwo if two')
         for (var i = 0; i < items.length; i++) {
             var div = $('<div>').addClass('item p2b')
             div.text(items[i])
@@ -128,8 +139,6 @@ function renderTwo() {
         playerTwoChoose()
     }
     
-    var p = $('<p>').text('waiting on player 2')
-    $('items1').append(p)
     
 }
 
@@ -162,10 +171,11 @@ game.on("value", function (snapshot) {
 })
 
 function playerOneChoose() {
-    console.log('deer')
+    console.log('playerOneChoose')
 
     $('.p1b').on('click', (e) => {
         p1g = e.target.innerText
+        console.log('playerOneChoose click')
 
         console.log('player 1: ' + p1g)
         game.set({
@@ -179,12 +189,13 @@ function playerOneChoose() {
 }
 
 function playerTwoChoose() {
-    console.log('elk')
+    console.log('PlayerTwoChoose')
 
     $('.p2b').on('click', (e) => {
+        console.log('playerTwoChoose click')
         p2g = e.target.innerText
         // $('.items2').empty()
-        console.log('player 2: ' + p2g)
+        
         game.set({
             playerOneGuess: p1g,
             playerTwoGuess: p2g,
