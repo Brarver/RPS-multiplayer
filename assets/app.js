@@ -103,9 +103,7 @@ function renderOne() {
     $('.items2').empty()
 
     var s = $('<div>').text('waiting on player 1')
-    // $('.items2').append(s)
-    s.appendTo('.items2')
-
+    $('.items2').append(s)
     
     var items = ['rock', 'paper', 'scissors']
 
@@ -128,8 +126,8 @@ function renderTwo() {
     $('.items2').empty()
 
     var p = $('<div>').text('waiting on player 2')
-    // $('items1').append(p)
-    p.appendTo('.items1')
+    $('.items1').append(p)
+
     if (you === 'two') {
         console.log('renderTwo if two')
         for (var i = 0; i < items.length; i++) {
@@ -239,6 +237,9 @@ function oneWins() {
     p1g = null
     p2g = null
     $('.board').text('Player One Wins!')
+    setTimeout(function newGame() {
+        $('.board').text('new GAME')
+    }, 3000)
     game.set({
         playerOneGuess: p1g,
         playerTwoGuess: p2g,
