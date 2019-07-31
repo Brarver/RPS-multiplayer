@@ -24,6 +24,8 @@ var p2s = null
 var p1g = null
 var p2g = null
 var check = false
+var playerOneExists = false
+var playerTwoExists = false
 
 //////////////////////////////////////Connections////////////////////////////////////////////////////////////////
 
@@ -56,16 +58,19 @@ connectionsRef.on("value", function(snap) {
 
 $('#add-player').on('click', function() {
 
-    if (!player1) {
+    if (!playerOneExists) {
+        playerOneExists = true
         player1 = $('#player-name').val().trim()
         $('.info').empty()
         $('.info').text(player1 + ' your are player 1, waiting on player 2')
         you = 'one'
         players.set({
-            player1: player1
+            player1: player1,
+            playerOneExists: playerOneExists
         })
 
-    } else if (!player2) {
+    } else if (!playerTwoExists) {
+        playerTwoExists = true
         player2 = $('#player-name').val().trim()
         $('.info').empty()
         $('.info').text(player2 + ' your are player 2')
@@ -73,7 +78,9 @@ $('#add-player').on('click', function() {
         check = true
         players.set({
             player1: player1,
-            player2: player2
+            player2: player2,
+            playerOneExists: playerOneExists,
+            playerTwoExists: playerTwoExists
         })
     }
 })
@@ -83,6 +90,8 @@ players.on('value', function(snapshot) {
     if (snapshot.exists()) {
         player1 = snapshot.val().player1
         player2 = snapshot.val().player2
+        playerOneExists = snapshot.val().playerOneExists
+        playerTwoExists = snapshot.val().playerTwoExists
         $('#player-1-name').text(player1)
         $('#player-2-name').text(player2)
     }
@@ -95,6 +104,40 @@ players.on('value', function(snapshot) {
 })
 
 /////////////////////////////////////////game//////////////////////////////////////////////////////////////////
+
+
+game.on("value", function (snapshot) {
+
+    // if (!snapshot.child('playerOneGuess').exists() && check) {
+    //     renderOne()
+    // }
+
+    if (!snapshot.child('playerOneGuess').exists() && playerTwoExists) {
+        renderOne()
+    }
+
+    if (snapshot.child('playerOneGuess').exists() && playerOneExists && playerTwoExists) {
+        p1g = snapshot.val().playerOneGuess  
+        renderTwo()
+    }
+    if (snapshot.child('playerTwoGuess').exists()) {
+        p2g = snapshot.val().playerTwoGuess  
+    }
+    if (snapshot.child('playerOneScore').exists()) {
+        p1s = snapshot.val().playerOneScore
+    }
+    if (snapshot.child('playerTwoScore').exists()) {
+        p2s = snapshot.val().playerTwoScore
+    }
+    if (snapshot.child('ties').exists()) {
+        ties = snapshot.val().ties
+    }
+
+    if (snapshot.child('playerOneGuess').exists() && snapshot.child('playerTwoGuess').exists()) {
+        return play(snapshot.val().playerOneGuess, snapshot.val().playerTwoGuess)
+    }
+})
+
 
 function renderOne() {
     console.log('renderOne')
@@ -138,34 +181,6 @@ function renderTwo() {
         playerTwoChoose()
     }   
 }
-
-game.on("value", function (snapshot) {
-
-    if (!snapshot.child('playerOneGuess').exists() && check) {
-        renderOne()
-    }
-
-    if (snapshot.child('playerOneGuess').exists()) {
-        p1g = snapshot.val().playerOneGuess  
-        renderTwo()
-    }
-    if (snapshot.child('playerTwoGuess').exists()) {
-        p2g = snapshot.val().playerTwoGuess  
-    }
-    if (snapshot.child('playerOneScore').exists()) {
-        p1s = snapshot.val().playerOneScore
-    }
-    if (snapshot.child('playerTwoScore').exists()) {
-        p2s = snapshot.val().playerTwoScore
-    }
-    if (snapshot.child('ties').exists()) {
-        ties = snapshot.val().ties
-    }
-
-    if (snapshot.child('playerOneGuess').exists() && snapshot.child('playerTwoGuess').exists()) {
-        return play(snapshot.val().playerOneGuess, snapshot.val().playerTwoGuess)
-    }
-})
 
 function playerOneChoose() {
     console.log('playerOneChoose')
