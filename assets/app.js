@@ -26,7 +26,9 @@ var p2g = null
 var check = false
 var playerOneExists = false
 var playerTwoExists = false
-
+var playerOneConnected = false
+var playerTwoConnected = false
+var connections = 0
 //////////////////////////////////////Connections////////////////////////////////////////////////////////////////
 
 var connectionsRef = database.ref("/connections");
@@ -36,21 +38,24 @@ var connectedRef = database.ref(".info/connected");
 
 connectedRef.on("value", function(snap) {
 
-  
-  if (snap.val()) {
+  if (snap.val() && connections <= 1) {
 
     var con = connectionsRef.push(true);
-    
-    con.onDisconnect().remove();
 
+  }
+
+  if (snap.val()) {
+    con.onDisconnect().remove();
   }
 });
 
 connectionsRef.on("value", function(snap) {
 
-    console.log(snap.numChildren())
+    
+    connections = snap.numChildren()
+    console.log('connections: ' + connections)
 
-  $("#connected-viewers").text(snap.numChildren());
+//   $("#connected-viewers").text(snap.numChildren());
 });
 
 
@@ -62,7 +67,7 @@ $('#add-player').on('click', function() {
         playerOneExists = true
         player1 = $('#player-name').val().trim()
         $('.info').empty()
-        $('.info').text(player1 + ' your are player 1, waiting on player 2')
+        $('.info').text(player1 + ' your are player 1')
         you = 'one'
         players.set({
             player1: player1,
@@ -145,7 +150,7 @@ function renderOne() {
     $('.items1').empty()
     $('.items2').empty()
 
-    var s = $('<div>').text('waiting on player 1')
+    var s = $('<div>').text('waiting on player 1 to choose')
     $('.items2').append(s)
     
     var items = ['rock', 'paper', 'scissors']
@@ -168,7 +173,7 @@ function renderTwo() {
     $('.items1').empty()
     $('.items2').empty()
 
-    var p = $('<div>').text('waiting on player 2')
+    var p = $('<div>').text('waiting on player 2 to choose')
     $('.items1').append(p)
 
     if (you === 'two') {
