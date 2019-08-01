@@ -256,19 +256,21 @@ function play(a, b) {
 
 function oneWins() {
     p1s++
-    p1g = null
-    p2g = null
-    $('.board').text('Player One Wins!')
+    
+    $('.board').text(player1 + ' One Wins!')
     setTimeout(function newGame() {
-        $('.board').text('new GAME')
+        $('.board').text('Playing')
+        p1g = null
+        p2g = null
+        game.set({
+            playerOneGuess: p1g,
+            playerTwoGuess: p2g,
+            playerOneScore: p1s,
+            playerTwoScore: p2s,
+            ties: ties
+        })
     }, 3000)
-    game.set({
-        playerOneGuess: p1g,
-        playerTwoGuess: p2g,
-        playerOneScore: p1s,
-        playerTwoScore: p2s,
-        ties: ties
-    })
+    
     
 }
 
@@ -276,9 +278,9 @@ function twoWins() {
     p2s++
     p1g = null
     p2g = null
-    $('.board').text('Player Two Wins!')
+    $('.board').text(player2 + ' Two Wins!')
     setTimeout(function newGame() {
-        $('.board').text('new GAME')
+        $('.board').text('Playing')
     }, 3000)
     game.set({
         playerOneGuess: p1g,

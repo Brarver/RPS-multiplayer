@@ -18,19 +18,14 @@ var players = database.ref('/players')
 var player1
 var player2
 var you
-var ties = null
-var p1s = null
-var p2s = null
+var p1w = 0
+var p2w = 0
+var p1l = 0
+var p2l = 0
 var p1g = null
 var p2g = null
-var check = false
-var playerOneExists = false
-var playerTwoExists = false
-var playerOneConnected = false
-var playerTwoConnected = false
 var playerOneKey = undefined;
 var playerTwoKey = undefined;
-var connections = 0; // NOTE(rick): This variable can disappear.
 var connectionKey = undefined;
 //////////////////////////////////////Connections////////////////////////////////////////////////////////////////
 
@@ -47,7 +42,7 @@ var connectedRef = database.ref(".info/connected");
 // a player user leaves.
 
 connectedRef.on("value", function(snap) {
-	console.log('tiggy:' + connections)
+	
 
 	// NOTE(rick): We don't really care how many "connections" there are.
 	// Whenever someone connects lets snap a copy of their connection key and
@@ -103,7 +98,8 @@ connectionsRef.on("value", function(snap) {
 				// NOTE(rick): If one or both of the player keys are not in the
 				// active connections list then we need to reset the game.
 				console.log("Reset game");
-				ResetGame(playerOneConnected, playerTwoConnected);
+                // ResetGame(playerOneConnected, playerTwoConnected);
+                resetGame();
 			}
 			else
 			{
@@ -117,102 +113,30 @@ connectionsRef.on("value", function(snap) {
 	}
 });
 
-// TODO(rick): Move this down with the other game play related functions. It is
-// only here to keep it close to the other changes.
-// NOTE(rick): Take as arguments the "connected" status of each player. This
-// helps us determine which player left and how to properly "reset" and update
-// the UI.
-function ResetGame(playerOneConnected, playerTwoConnected)
-{
-	// NOTE(rick): If player one is still connected and player two left
-	if(playerOneConnected && !playerTwoConnected)
-	{
-		// NOTE(rick): Set the leaving player existence to false and update the
-		// player connection key to an empty string (.set() doesn't let me
-		// insert undefined).
-		// NOTE(rick): Copy values that can be coppied and reset ones relevant
-		// to the leaving user.
-		playerTwoExists = false;
-		playerTwoKey = "";
-		$("#player-2-name").text("Waiting for player 2");
-		$(".items2").empty();
-        players.set({
-            player1: player1,
-            player2: "",
-            playerOneExists: playerOneExists,
-            playerTwoExists: playerTwoExists,
-			playerOneKey: playerOneKey,
-			playerTwoKey: playerTwoKey
-        })
-	}
-	// NOTE(rick): If player two is still connected and player one left
-	else if(playerTwoConnected && !playerOneConnected)
-	{
-		playerOneExists = false;
-		playerOneKey = "";
-		$("#player-1-name").text("Waiting for player 1");
-		$(".items1").empty();
-        players.set({
-            player1: "",
-            player2: player2,
-            playerOneExists: playerOneExists,
-            playerTwoExists: playerTwoExists,
-			playerOneKey: playerOneKeyundefined,
-			playerTwoKey: playerTwoKey
-        });
-	}
-	// NOTE(rick): If both players left
-	else
-	{
-		playerOneExists = false;
-		playerTwoExists = false;
-		playerOneKey = "";
-		playerTwoKey = "";
-		$("#player-1-name").text("Waiting for player 1");
-		$("#player-2-name").text("Waiting for player 2");
-		$(".items1").empty();
-		$(".items2").empty();
-		players.remove();
-	}
-}
-
-
 /////////////////////////////////////set players//////////////////////////////////////////////
 
 $('#add-player').on('click', function() {
-    if (!playerOneExists) {
-        playerOneExists = true
+    if (!playerOneKey) {
         player1 = $('#player-name').val().trim()
-        $('.info').empty()
-        $('.info').text(player1 + ' your are player 1')
+        $('#player-name').hide()
+        $('#add-player').hide()
+        $('.designation').append(player1 + ' you are player 1')
         you = 'one'
         players.set({
             player1: player1,
-            playerOneExists: playerOneExists,
-			// NOTE(rick): This user has added themselves to the game, store
-			// their connection key into the players document. Later one when
-			// someone joins their instance of the app will be able to know who
-			// the players are and behave as expected.
 			playerOneKey: connectionKey
         })
 
-    } else if (!playerTwoExists) {
-        playerTwoExists = true
+    } else if (!playerTwoKey) {
         player2 = $('#player-name').val().trim()
-        $('.info').empty()
-        $('.info').text(player2 + ' your are player 2')
+        $('#player-name').hide()
+        $('#add-player').hide()
+        $('.designation').append(player2 + ' you are player 2')
         you = 'two'
-        check = true
         players.set({
             player1: player1,
             player2: player2,
-            playerOneExists: playerOneExists,
-            playerTwoExists: playerTwoExists,
 			playerOneKey: playerOneKey,
-			// NOTE(rick): This user has added themselves to the game, store
-			// their connection key into the players document. Later one when
-			// someone joins their instance of the app will be able to know who
-			// the players are and behave as expected.
 			playerTwoKey: connectionKey
         })
     }
@@ -224,8 +148,6 @@ players.on('value', function(snapshot) {
     if (snapshot.exists()) {
         player1 = snapshot.val().player1
         player2 = snapshot.val().player2
-        playerOneExists = snapshot.val().playerOneExists
-        playerTwoExists = snapshot.val().playerTwoExists
 		playerOneKey = snapshot.val().playerOneKey;
 		playerTwoKey = snapshot.val().playerTwoKey;
         $('#player-1-name').text(player1)
@@ -244,29 +166,27 @@ players.on('value', function(snapshot) {
 
 game.on("value", function (snapshot) {
 
-    // if (!snapshot.child('playerOneGuess').exists() && check) {
-    //     renderOne()
-    // }
-
-    if (!snapshot.child('playerOneGuess').exists() && playerTwoExists) {
+    if (!snapshot.child('playerOneGuess').exists() && playerTwoKey) {
         renderOne()
     }
-
-    if (snapshot.child('playerOneGuess').exists() && playerOneExists && playerTwoExists) {
+    if (snapshot.child('playerOneGuess').exists() && playerOneKey && playerTwoKey) {
         p1g = snapshot.val().playerOneGuess  
         renderTwo()
     }
     if (snapshot.child('playerTwoGuess').exists()) {
         p2g = snapshot.val().playerTwoGuess  
     }
-    if (snapshot.child('playerOneScore').exists()) {
-        p1s = snapshot.val().playerOneScore
+    if (snapshot.child('playerOneWin').exists()) {
+        p1w = snapshot.val().playerOneWin
     }
-    if (snapshot.child('playerTwoScore').exists()) {
-        p2s = snapshot.val().playerTwoScore
+    if (snapshot.child('playerOneLoss').exists()) {
+        p1l = snapshot.val().playerOneLoss
     }
-    if (snapshot.child('ties').exists()) {
-        ties = snapshot.val().ties
+    if (snapshot.child('playerTwoWin').exists()) {
+        p2w = snapshot.val().playerTwoWin
+    }
+    if (snapshot.child('playerTwoLoss').exists()) {
+        p2l = snapshot.val().playerTwoLoss
     }
 
     if (snapshot.child('playerOneGuess').exists() && snapshot.child('playerTwoGuess').exists()) {
@@ -274,13 +194,34 @@ game.on("value", function (snapshot) {
     }
 })
 
+function resetGame() {
+    $('.score').empty()
+    $('.designation').empty()
+    $('#player-name').show().val('')
+    $('#add-player').show()
+    $('.board').empty()
+    alert('A player has left. Game Over!')
+    p1w = 0
+    p1l = 0
+    p2w = 0
+    p2l = 0
+    playerOneKey = "";
+    playerTwoKey = "";
+    $("#player-1-name").text("Waiting for player 1");
+    $("#player-2-name").text("Waiting for player 2");
+    $(".items1").empty();
+    $(".items2").empty();
+    players.remove();
+    game.remove()
+}
+
 
 function renderOne() {
     console.log('renderOne')
-    check = true
     $('.items1').empty()
     $('.items2').empty()
 
+    renderWins()
     var s = $('<div>').text('waiting on player 1 to choose')
     $('.items2').append(s)
     
@@ -318,6 +259,18 @@ function renderTwo() {
     }   
 }
 
+function renderWins() {
+    $('.wins-losses1').text('Wins: ' + p1w + ' Losses: ' + p1l)
+    $('.wins-losses2').text('Wins: ' + p2w + ' Losses: ' + p2l)
+}
+
+function renderGuess() {
+    $('.items1').empty()
+    $('.items2').empty()
+    $('.items1').text(p1g)
+    $('.items2').text(p2g)
+}
+
 function playerOneChoose() {
     console.log('playerOneChoose')
 
@@ -327,9 +280,10 @@ function playerOneChoose() {
         game.set({
             playerOneGuess: p1g,
             playerTwoGuess: p2g,
-            playerOneScore: p1s,
-            playerTwoScore: p2s,
-            ties: ties
+            playerOneWin: p1w,
+            playerOneLoss: p1l,
+            playerTwoWin: p2w,
+            playerTwoLoss: p2l
         }) 
     })    
 }
@@ -343,9 +297,10 @@ function playerTwoChoose() {
         game.set({
             playerOneGuess: p1g,
             playerTwoGuess: p2g,
-            playerOneScore: p1s,
-            playerTwoScore: p2s,
-            ties: ties
+            playerOneWin: p1w,
+            playerOneLoss: p1l,
+            playerTwoWin: p2w,
+            playerTwoLoss: p2l
         }) 
     })
 }
@@ -384,61 +339,132 @@ function play(a, b) {
 }
 
 function oneWins() {
-    p1s++
-    p1g = null
-    p2g = null
-    $('.board').text('Player One Wins!')
+    p1w++
+    p2l++
+    renderGuess()
+    renderWins()
+    $('.board').text(player1 + ' Wins!')
     setTimeout(function newGame() {
-        $('.board').text('new GAME')
+        $('.board').text('Game in Progress')
+        p1g = null
+        p2g = null
+        game.set({
+            playerOneGuess: p1g,
+            playerTwoGuess: p2g,
+            playerOneWin: p1w,
+            playerOneLoss: p1l,
+            playerTwoWin: p2w,
+            playerTwoLoss: p2l
+        })
     }, 3000)
-    game.set({
-        playerOneGuess: p1g,
-        playerTwoGuess: p2g,
-        playerOneScore: p1s,
-        playerTwoScore: p2s,
-        ties: ties
-    })
+    
     
 }
 
 function twoWins() {
-    p2s++
-    p1g = null
-    p2g = null
-    $('.board').text('Player Two Wins!')
-    game.set({
-        playerOneGuess: p1g,
-        playerTwoGuess: p2g,
-        playerOneScore: p1s,
-        playerTwoScore: p2s,
-        ties: ties
-    })
+    p2w++
+    p1l++
+    renderGuess()
+    renderWins()
+    $('.board').text(player2 + ' Wins!')
+
+    setTimeout(function newGame() {
+        $('.board').text('Game in Progress')
+        p1g = null
+        p2g = null
+        game.set({
+            playerOneGuess: p1g,
+            playerTwoGuess: p2g,
+            playerOneWin: p1w,
+            playerOneLoss: p1l,
+            playerTwoWin: p2w,
+            playerTwoLoss: p2l
+        })
+    }, 3000)
+    
 }
 
 function tie() {
-    ties++
-    p1g = null
-    p2g = null
+    renderGuess()
     $('.board').text('There was a tie')
-    game.set({
-        playerOneGuess: p1g,
-        playerTwoGuess: p2g,
-        playerOneScore: p1s,
-        playerTwoScore: p2s,
-        ties: ties
-    })
+    setTimeout(function newGame() {
+        p1g = null
+        p2g = null
+        $('.board').text('Game in Progress')
+        game.set({
+            playerOneGuess: p1g,
+            playerTwoGuess: p2g,
+            playerOneWin: p1w,
+            playerOneLoss: p1l,
+            playerTwoWin: p2w,
+            playerTwoLoss: p2l
+        })
+    }, 3000)
+    
 
 }
 
-//when player makes choice set their decision
-//if there are two guesses playgame() inside of global data listener
-//if player wins set their wins/score inside global data listener
-// set the js variables to null inside of global data listener
 
-//multiplayer
-//player1 function and player2 function
-//if someone clicks player1 button then it sets fb variable that tells p2 they are p2
+// TODO(rick): Move this down with the other game play related functions. It is
+// only here to keep it close to the other changes.
+// NOTE(rick): Take as arguments the "connected" status of each player. This
+// helps us determine which player left and how to properly "reset" and update
+// the UI.
+// function ResetGame(playerOneConnected, playerTwoConnected)
+// {
+// 	if(playerOneConnected && !playerTwoConnected)
+// 	{
+// 		playerTwoExists = false;
+// 		playerTwoKey = "";
+// 		$("#player-2-name").text("Waiting for player 2 to join");
+// 		$(".items2").empty();
+//         players.set({
+//             player1: player1,
+//             player2: "",
+//             playerOneExists: playerOneExists,
+//             playerTwoExists: playerTwoExists,
+// 			playerOneKey: playerOneKey,
+// 			playerTwoKey: playerTwoKey
+//         })
+//         game.remove()
+// 	}
+	
+// 	else if(playerTwoConnected && !playerOneConnected)
+// 	{
+// 		playerOneExists = false;
+// 		playerOneKey = "";
+// 		$("#player-1-name").text("Waiting for player 1 to join");
+// 		$(".items1").empty();
+//         players.set({
+//             player1: "",
+//             player2: player2,
+//             playerOneExists: playerOneExists,
+//             playerTwoExists: playerTwoExists,
+// 			playerOneKey: playerOneKeyundefined,
+// 			playerTwoKey: playerTwoKey
+//         })
+//         game.remove()
+// 	}
+	
+// 	else
+// 	{
+// 		playerOneExists = false;
+// 		playerTwoExists = false;
+// 		playerOneKey = "";
+// 		playerTwoKey = "";
+// 		$("#player-1-name").text("Waiting for player 1");
+// 		$("#player-2-name").text("Waiting for player 2");
+// 		$(".items1").empty();
+// 		$(".items2").empty();
+//         players.remove();
+//         game.remove()
+// 	}
+// }
 
 
-//reset varibles 
+//from add-player click
+// NOTE(rick): This user has added themselves to the game, store
+			// their connection key into the players document. Later one when
+			// someone joins their instance of the app will be able to know who
+			// the players are and behave as expected.
 
