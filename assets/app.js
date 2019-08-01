@@ -37,11 +37,13 @@ var connectedRef = database.ref(".info/connected");
 
 
 connectedRef.on("value", function(snap) {
+    console.log('tiggy:' + connections)
 
   if (snap.val() && connections <= 1) {
-
+    
     var con = connectionsRef.push(true);
-
+    connections++
+    console.log('conny: ' + connections)
   }
 
   if (snap.val()) {
@@ -52,7 +54,7 @@ connectedRef.on("value", function(snap) {
 connectionsRef.on("value", function(snap) {
 
     
-    connections = snap.numChildren()
+    // connections = snap.numChildren()
     console.log('connections: ' + connections)
 
 //   $("#connected-viewers").text(snap.numChildren());
