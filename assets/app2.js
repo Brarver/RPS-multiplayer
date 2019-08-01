@@ -28,43 +28,158 @@ var playerOneExists = false
 var playerTwoExists = false
 var playerOneConnected = false
 var playerTwoConnected = false
-var connections = 0
+var playerOneKey = undefined;
+var playerTwoKey = undefined;
+var connections = 0; // NOTE(rick): This variable can disappear.
+var connectionKey = undefined;
 //////////////////////////////////////Connections////////////////////////////////////////////////////////////////
 
 var connectionsRef = database.ref("/connections");
 
 var connectedRef = database.ref(".info/connected");
 
+// NOTE(rick): My changes cleaned up the logic whenever the connection to
+// the database was changed in connectedRef.on. I added logic to the
+// connectionsRef.on callback function to understand who is leaving the app and
+// then handle the leave events accordingly. In the add player event handler I
+// store connection keys for players in the database and in the app code, this
+// lets be retrive it later for new joiners and update everyones state whenever
+// a player user leaves.
 
 connectedRef.on("value", function(snap) {
-    console.log('conn 1:' + connections)
+	console.log('tiggy:' + connections)
 
-  if (snap.val() && connections <= 1) {
-    
-    var con = connectionsRef.push(true);
-    connections++
-    console.log('conn 2: ' + connections)
-  }
+	// NOTE(rick): We don't really care how many "connections" there are.
+	// Whenever someone connects lets snap a copy of their connection key and
+	// setup a .remove function to get them out of the connections database when
+	// they leave.
+	if (snap.val() === true)
+	{
+		var con = connectionsRef.push();
+		connectionKey = con.key;
 
-  if (snap.val()) {
-    con.onDisconnect().remove();
-  }
+		con.onDisconnect().remove(function(err) {
+			if(err)
+			{
+				console.log("There was an error removing a user: %s", err);
+			}
+		});
+
+		// NOTE(rick): I moved setting the true value out of the push simply
+		// because that's how the docs had it. You're probably safe to move this
+		// back into the push call above.
+		con.set(true);
+	}
 });
 
 connectionsRef.on("value", function(snap) {
+    console.log('All keys: %o', snap.val());  // TODO(rick): Remove this
 
-    
-    // connections = snap.numChildren()
-    console.log('conn 3: ' + connections)
+	// NOTE(rick): Here we pull all of the active connection "keys" out of the
+	// database.
+	var AllKeys = snap.val();
 
-//   $("#connected-viewers").text(snap.numChildren());
+	// NOTE(rick): We don't care what the update was if we don't have two
+	// players. The .set() function wouldn't let me set values to undefined so I
+	// set them to empty strings, so we need to check that a players exist and
+	// they have a real connection key (any string with length > 0).
+	if(((playerOneKey !== undefined) && (playerOneKey.length)) &&
+	   ((playerTwoKey !== undefined) && (playerTwoKey.length)))
+	{
+		// NOTE(rick): Because we're calling the .hasOwnProperty method on the
+		// AllKeys object lets check that we actually have an object.
+		if(AllKeys !== undefined)
+		{
+			// NOTE(rick): Check for the presence of the player
+			// connection keys in the currently active connections.
+			var playerOneConnected = AllKeys.hasOwnProperty(playerOneKey);
+			var playerTwoConnected = AllKeys.hasOwnProperty(playerTwoKey);
+
+			// NOTE(rick): Test that there are two players with active
+			// connections.
+			var bothPlayersConnected = (playerOneConnected && playerTwoConnected);
+			if(!bothPlayersConnected)
+			{
+				// NOTE(rick): If one or both of the player keys are not in the
+				// active connections list then we need to reset the game.
+				console.log("Reset game");
+				ResetGame(playerOneConnected, playerTwoConnected);
+			}
+			else
+			{
+				// TODO(rick): Remove this block
+				// NOTE(rick): We get here if both player keys are in the active
+				// connections list. This means that the leave event was
+				// triggered by a viewer leaving so we don't have any action to
+				// take.
+			}
+		}
+	}
 });
+
+// TODO(rick): Move this down with the other game play related functions. It is
+// only here to keep it close to the other changes.
+// NOTE(rick): Take as arguments the "connected" status of each player. This
+// helps us determine which player left and how to properly "reset" and update
+// the UI.
+function ResetGame(playerOneConnected, playerTwoConnected)
+{
+	// NOTE(rick): If player one is still connected and player two left
+	if(playerOneConnected && !playerTwoConnected)
+	{
+		// NOTE(rick): Set the leaving player existence to false and update the
+		// player connection key to an empty string (.set() doesn't let me
+		// insert undefined).
+		// NOTE(rick): Copy values that can be coppied and reset ones relevant
+		// to the leaving user.
+		playerTwoExists = false;
+		playerTwoKey = "";
+		$("#player-2-name").text("Waiting for player 2");
+		$(".items2").empty();
+        players.set({
+            player1: player1,
+            player2: "",
+            playerOneExists: playerOneExists,
+            playerTwoExists: playerTwoExists,
+			playerOneKey: playerOneKey,
+			playerTwoKey: playerTwoKey
+        })
+	}
+	// NOTE(rick): If player two is still connected and player one left
+	else if(playerTwoConnected && !playerOneConnected)
+	{
+		playerOneExists = false;
+		playerOneKey = "";
+		$("#player-1-name").text("Waiting for player 1");
+		$(".items1").empty();
+        players.set({
+            player1: "",
+            player2: player2,
+            playerOneExists: playerOneExists,
+            playerTwoExists: playerTwoExists,
+			playerOneKey: playerOneKeyundefined,
+			playerTwoKey: playerTwoKey
+        });
+	}
+	// NOTE(rick): If both players left
+	else
+	{
+		playerOneExists = false;
+		playerTwoExists = false;
+		playerOneKey = "";
+		playerTwoKey = "";
+		$("#player-1-name").text("Waiting for player 1");
+		$("#player-2-name").text("Waiting for player 2");
+		$(".items1").empty();
+		$(".items2").empty();
+		players.remove();
+	}
+}
 
 
 /////////////////////////////////////set players//////////////////////////////////////////////
 
 $('#add-player').on('click', function() {
-
     if (!playerOneExists) {
         playerOneExists = true
         player1 = $('#player-name').val().trim()
@@ -73,7 +188,12 @@ $('#add-player').on('click', function() {
         you = 'one'
         players.set({
             player1: player1,
-            playerOneExists: playerOneExists
+            playerOneExists: playerOneExists,
+			// NOTE(rick): This user has added themselves to the game, store
+			// their connection key into the players document. Later one when
+			// someone joins their instance of the app will be able to know who
+			// the players are and behave as expected.
+			playerOneKey: connectionKey
         })
 
     } else if (!playerTwoExists) {
@@ -87,18 +207,27 @@ $('#add-player').on('click', function() {
             player1: player1,
             player2: player2,
             playerOneExists: playerOneExists,
-            playerTwoExists: playerTwoExists
+            playerTwoExists: playerTwoExists,
+			playerOneKey: playerOneKey,
+			// NOTE(rick): This user has added themselves to the game, store
+			// their connection key into the players document. Later one when
+			// someone joins their instance of the app will be able to know who
+			// the players are and behave as expected.
+			playerTwoKey: connectionKey
         })
     }
 })
 
 players.on('value', function(snapshot) {
+	console.log("%o", snapshot.val());
 
     if (snapshot.exists()) {
         player1 = snapshot.val().player1
         player2 = snapshot.val().player2
         playerOneExists = snapshot.val().playerOneExists
         playerTwoExists = snapshot.val().playerTwoExists
+		playerOneKey = snapshot.val().playerOneKey;
+		playerTwoKey = snapshot.val().playerTwoKey;
         $('#player-1-name').text(player1)
         $('#player-2-name').text(player2)
     }
@@ -110,7 +239,7 @@ players.on('value', function(snapshot) {
     
 })
 
-/////////////////////////////////////////game render//////////////////////////////////////////////////////////////////
+/////////////////////////////////////////game//////////////////////////////////////////////////////////////////
 
 
 game.on("value", function (snapshot) {
@@ -277,9 +406,6 @@ function twoWins() {
     p1g = null
     p2g = null
     $('.board').text('Player Two Wins!')
-    setTimeout(function newGame() {
-        $('.board').text('new GAME')
-    }, 3000)
     game.set({
         playerOneGuess: p1g,
         playerTwoGuess: p2g,
@@ -304,8 +430,15 @@ function tie() {
 
 }
 
-//https://firebase.googleblog.com/2013/06/how-to-build-presence-system.html
-//https://stackoverflow.com/questions/11351689/detect-if-firebase-connection-is-lost-regained
+//when player makes choice set their decision
+//if there are two guesses playgame() inside of global data listener
+//if player wins set their wins/score inside global data listener
+// set the js variables to null inside of global data listener
+
+//multiplayer
+//player1 function and player2 function
+//if someone clicks player1 button then it sets fb variable that tells p2 they are p2
 
 
+//reset varibles 
 
