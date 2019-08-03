@@ -395,8 +395,17 @@ $('.submit-text').on('submit', function(e) {
 
 chat.on('child_added', function(childSnapShot) {
     console.log(childSnapShot.val().comment)
+    var children = $('.chat-text').children().length
 
     $('.chat-text').append("<div class='chat-line'>" + childSnapShot.val().comment)
+
+    if (children > 5) {
+        $('.chat-text').children().first().remove()
+    }
+
+  
+
+
 })
 
 

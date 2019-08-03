@@ -17,12 +17,13 @@ h1 {
 }
 
 .player {
-    width: 49%;
+    /* width: 49%; */
     max-height: 300px;
     min-height: 300px;
     display: inline-block;
     border: 1px solid black;
     /* z-index: 3; */
+    margin: 10px;
     
 }
 
@@ -57,23 +58,40 @@ h1 {
 }
 
 .chat {
-    height: 300px;
-    width: 300px;
+    height: 220px;
+    width: 500px;
     border: 1px solid black;
     margin: auto;
     /* position: relative;
     bottom: 400px;
     z-index: 2; */
     background-color: grey;
+    
 }
 
 .chat-text {
-    height: 200px;
-    width: 290px;
+    height: 150px;
+    width: 400px;
     background-color: white;
     text-align: left;
+    margin: auto;
+    margin-top: 10px;
+    overflow: scroll;
 }
 
 .chat-line {
     display: block;
+}
+
+.comment {
+    margin-top: 10px;
+    width: 400px;
+}
+
+.text-form {
+    margin: auto;
+}
+
+.try {
+    margin: auto;
 }
