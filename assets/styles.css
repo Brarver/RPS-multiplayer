@@ -8,6 +8,14 @@ body {
     text-align: center;
 }
 
+.head {
+    margin-bottom: 30px;
+}
+
+h1 {
+    margin: auto;
+}
+
 .player {
     width: 49%;
     max-height: 300px;
@@ -19,7 +27,8 @@ body {
 }
 
 .info {
-    height: 100px;
+    height: 60px;
+    text-align: center;
 }
 
 .player1 {
@@ -41,8 +50,30 @@ body {
     width: 300px;
     border: 1px solid black;
     margin: auto;
-    position: relative;
-    /* bottom: 200px; */
-    /* z-index: 2; */
+    /* position: relative;
+    bottom: 200px;
+    z-index: 2; */
     background-color: orange;
+}
+
+.chat {
+    height: 300px;
+    width: 300px;
+    border: 1px solid black;
+    margin: auto;
+    /* position: relative;
+    bottom: 400px;
+    z-index: 2; */
+    background-color: grey;
+}
+
+.chat-text {
+    height: 200px;
+    width: 290px;
+    background-color: white;
+    text-align: left;
+}
+
+.chat-line {
+    display: block;
 }

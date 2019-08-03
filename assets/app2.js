@@ -6,14 +6,15 @@ var firebaseConfig = {
     storageBucket: "",
     messagingSenderId: "114744099457",
     appId: "1:114744099457:web:1df429af2d7ebe7c"
-  };
+  }
 
-firebase.initializeApp(firebaseConfig);
+firebase.initializeApp(firebaseConfig)
 
-var database = firebase.database();
+var database = firebase.database()
 
 var game = database.ref('/game')
 var players = database.ref('/players')
+var chat = database.ref('/chat')
 
 var player1
 var player2
@@ -24,90 +25,48 @@ var p1l = 0
 var p2l = 0
 var p1g = null
 var p2g = null
-var playerOneKey = undefined;
-var playerTwoKey = undefined;
-var connectionKey = undefined;
+var playerOneKey = undefined
+var playerTwoKey = undefined
+var connectionKey = undefined
+
 //////////////////////////////////////Connections////////////////////////////////////////////////////////////////
 
-var connectionsRef = database.ref("/connections");
+var connectionsRef = database.ref("/connections")
+var connectedRef = database.ref(".info/connected")
 
-var connectedRef = database.ref(".info/connected");
-
-// NOTE(rick): My changes cleaned up the logic whenever the connection to
-// the database was changed in connectedRef.on. I added logic to the
-// connectionsRef.on callback function to understand who is leaving the app and
-// then handle the leave events accordingly. In the add player event handler I
-// store connection keys for players in the database and in the app code, this
-// lets be retrive it later for new joiners and update everyones state whenever
-// a player user leaves.
 
 connectedRef.on("value", function(snap) {
 	
-
-	// NOTE(rick): We don't really care how many "connections" there are.
-	// Whenever someone connects lets snap a copy of their connection key and
-	// setup a .remove function to get them out of the connections database when
-	// they leave.
-	if (snap.val() === true)
-	{
-		var con = connectionsRef.push();
-		connectionKey = con.key;
+	if (snap.val() === true) {
+        var con = connectionsRef.push()
+		connectionKey = con.key
 
 		con.onDisconnect().remove(function(err) {
-			if(err)
-			{
-				console.log("There was an error removing a user: %s", err);
+			if(err) {
+				console.log("There was an error removing a user: %s", err)
 			}
-		});
+		})
 
-		// NOTE(rick): I moved setting the true value out of the push simply
-		// because that's how the docs had it. You're probably safe to move this
-		// back into the push call above.
-		con.set(true);
+		con.set(true)
 	}
 });
 
 connectionsRef.on("value", function(snap) {
-    console.log('All keys: %o', snap.val());  // TODO(rick): Remove this
+    console.log('All keys: %o', snap.val());  
 
-	// NOTE(rick): Here we pull all of the active connection "keys" out of the
-	// database.
 	var AllKeys = snap.val();
 
-	// NOTE(rick): We don't care what the update was if we don't have two
-	// players. The .set() function wouldn't let me set values to undefined so I
-	// set them to empty strings, so we need to check that a players exist and
-	// they have a real connection key (any string with length > 0).
 	if(((playerOneKey !== undefined) && (playerOneKey.length)) &&
-	   ((playerTwoKey !== undefined) && (playerTwoKey.length)))
-	{
-		// NOTE(rick): Because we're calling the .hasOwnProperty method on the
-		// AllKeys object lets check that we actually have an object.
-		if(AllKeys !== undefined)
-		{
-			// NOTE(rick): Check for the presence of the player
-			// connection keys in the currently active connections.
-			var playerOneConnected = AllKeys.hasOwnProperty(playerOneKey);
-			var playerTwoConnected = AllKeys.hasOwnProperty(playerTwoKey);
+	   ((playerTwoKey !== undefined) && (playerTwoKey.length))) {
 
-			// NOTE(rick): Test that there are two players with active
-			// connections.
-			var bothPlayersConnected = (playerOneConnected && playerTwoConnected);
-			if(!bothPlayersConnected)
-			{
-				// NOTE(rick): If one or both of the player keys are not in the
-				// active connections list then we need to reset the game.
-				console.log("Reset game");
-                // ResetGame(playerOneConnected, playerTwoConnected);
+		if(AllKeys !== undefined) {
+			var playerOneConnected = AllKeys.hasOwnProperty(playerOneKey)
+			var playerTwoConnected = AllKeys.hasOwnProperty(playerTwoKey)
+
+			var bothPlayersConnected = (playerOneConnected && playerTwoConnected)
+			if(!bothPlayersConnected) {
+				
                 resetGame();
-			}
-			else
-			{
-				// TODO(rick): Remove this block
-				// NOTE(rick): We get here if both player keys are in the active
-				// connections list. This means that the leave event was
-				// triggered by a viewer leaving so we don't have any action to
-				// take.
 			}
 		}
 	}
@@ -158,7 +117,7 @@ players.on('value', function(snapshot) {
         console.log('initial')
         renderOne()
     }
-    
+
 })
 
 /////////////////////////////////////////game//////////////////////////////////////////////////////////////////
@@ -195,6 +154,10 @@ game.on("value", function (snapshot) {
 })
 
 function resetGame() {
+    players.remove();
+    game.remove()
+    chat.remove()
+    $('.chat-text').empty()
     $('.score').empty()
     $('.designation').empty()
     $('#player-name').show().val('')
@@ -211,8 +174,8 @@ function resetGame() {
     $("#player-2-name").text("Waiting for player 2");
     $(".items1").empty();
     $(".items2").empty();
-    players.remove();
-    game.remove()
+    renderOne()
+    
 }
 
 
@@ -221,9 +184,12 @@ function renderOne() {
     $('.items1').empty()
     $('.items2').empty()
 
+    if (playerOneKey && playerTwoKey) {
+    $('.board').text('Game in Progress')
     renderWins()
     var s = $('<div>').text('waiting on player 1 to choose')
     $('.items2').append(s)
+    
     
     var items = ['rock', 'paper', 'scissors']
 
@@ -237,6 +203,7 @@ function renderOne() {
         }
         playerOneChoose()
     }
+  }
 }
 
 function renderTwo() {
@@ -245,8 +212,13 @@ function renderTwo() {
     $('.items1').empty()
     $('.items2').empty()
 
-    var p = $('<div>').text('waiting on player 2 to choose')
-    $('.items1').append(p)
+    if (playerOneKey && playerTwoKey) {
+        $('.board').text('Game in Progress')
+        renderWins()
+        var p = $('<div>').text('waiting on player 2 to choose')
+        $('.items1').append(p)
+    
+    
 
     if (you === 'two') {
         console.log('renderTwo if two')
@@ -256,7 +228,8 @@ function renderTwo() {
             $('.items2').append(div)
         }
         playerTwoChoose()
-    }   
+    } 
+  }  
 }
 
 function renderWins() {
@@ -400,9 +373,31 @@ function tie() {
             playerTwoLoss: p2l
         })
     }, 3000)
-    
-
 }
+
+////////////////////////////////Chat////////////////////////////////////////////////////////
+
+$('.submit-text').on('submit', function(e) {
+    e.preventDefault()
+    var comment = $('.comment').val()
+    $('.comment').val('')
+    console.log(comment)
+    if (you === 'one' && playerTwoKey) {
+        chat.push({
+            comment: player1 + ': ' + comment
+        })
+    } else if (you === 'two' && playerTwoKey) {
+        chat.push({
+            comment: player2 + ': ' + comment
+        })
+    }
+})
+
+chat.on('child_added', function(childSnapShot) {
+    console.log(childSnapShot.val().comment)
+
+    $('.chat-text').append("<div class='chat-line'>" + childSnapShot.val().comment)
+})
 
 
 // TODO(rick): Move this down with the other game play related functions. It is
