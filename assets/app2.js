@@ -28,6 +28,7 @@ var p2g = null
 var playerOneKey = undefined
 var playerTwoKey = undefined
 var connectionKey = undefined
+var items = ['rock', 'paper', 'scissors']
 
 //////////////////////////////////////Connections////////////////////////////////////////////////////////////////
 
@@ -51,8 +52,7 @@ connectedRef.on("value", function(snap) {
 	}
 });
 
-connectionsRef.on("value", function(snap) {
-    console.log('All keys: %o', snap.val());  
+connectionsRef.on("value", function(snap) {  
 
 	var AllKeys = snap.val();
 
@@ -102,7 +102,6 @@ $('#add-player').on('click', function() {
 })
 
 players.on('value', function(snapshot) {
-	console.log("%o", snapshot.val());
 
     if (snapshot.exists()) {
         player1 = snapshot.val().player1
@@ -114,7 +113,6 @@ players.on('value', function(snapshot) {
     }
 
     if (snapshot.child('player2').exists()) {
-        console.log('initial')
         renderOne()
     }
 
@@ -172,29 +170,27 @@ function resetGame() {
     playerTwoKey = "";
     $("#player-1-name").text("Waiting for player 1");
     $("#player-2-name").text("Waiting for player 2");
+    $('.board').html('<p>Waiting For Two Players To Start The Game!</p>')
     $(".items1").empty();
     $(".items2").empty();
-    renderOne()
-    
+    $('.player1').removeClass('pink')
+    $('.player2').removeClass('pink')
 }
 
 
 function renderOne() {
-    console.log('renderOne')
     $('.items1').empty()
     $('.items2').empty()
+    $('.player1').addClass('pink')
+    
 
     if (playerOneKey && playerTwoKey) {
-    $('.board').text('Game in Progress')
+    $('.board').html('<p>Game in Progress</p>')
     renderWins()
-    var s = $('<div>').text('waiting on player 1 to choose')
+    var s = $('<div class="item4">').html('waiting on <br> ' + player1 + '<br> to choose')
     $('.items2').append(s)
-    
-    
-    var items = ['rock', 'paper', 'scissors']
 
     if (you === 'one') {
-        console.log('renderOne if one')
         for (var i = 0; i < items.length; i++) {
             var div = $('<div>').addClass('item p1b')
             div.text(items[i])
@@ -207,21 +203,21 @@ function renderOne() {
 }
 
 function renderTwo() {
-    console.log('renderTwo')
-    var items = ['rock', 'paper', 'scissors']
+
     $('.items1').empty()
     $('.items2').empty()
+    $('.player2').addClass('pink')
+    $('.player1').removeClass('pink')
 
     if (playerOneKey && playerTwoKey) {
-        $('.board').text('Game in Progress')
+        $('.board').html('<p>Game in Progress</p>')
         renderWins()
-        var p = $('<div>').text('waiting on player 2 to choose')
+        var p = $('<div class="item4">').html('waiting on <br> ' + player2 + ' <br> to choose')
         $('.items1').append(p)
     
     
 
     if (you === 'two') {
-        console.log('renderTwo if two')
         for (var i = 0; i < items.length; i++) {
             var div = $('<div>').addClass('item p2b')
             div.text(items[i])
@@ -240,16 +236,14 @@ function renderWins() {
 function renderGuess() {
     $('.items1').empty()
     $('.items2').empty()
-    $('.items1').text(p1g)
-    $('.items2').text(p2g)
+    $('.items1').html('<div class="item3">' + p1g )
+    $('.items2').html('<div class="item3">' + p2g )
 }
 
 function playerOneChoose() {
-    console.log('playerOneChoose')
 
     $('.p1b').on('click', (e) => {
         p1g = e.target.innerText
-        console.log('playerOneChoose click')
         game.set({
             playerOneGuess: p1g,
             playerTwoGuess: p2g,
@@ -262,10 +256,8 @@ function playerOneChoose() {
 }
 
 function playerTwoChoose() {
-    console.log('PlayerTwoChoose')
 
     $('.p2b').on('click', (e) => {
-        console.log('playerTwoChoose click')
         p2g = e.target.innerText
         game.set({
             playerOneGuess: p1g,
@@ -312,13 +304,14 @@ function play(a, b) {
 }
 
 function oneWins() {
+    $('.player2').removeClass('pink')
     p1w++
     p2l++
     renderGuess()
     renderWins()
-    $('.board').text(player1 + ' Wins!')
+    $('.board').html('<p>' + player1 + ' Wins!</p>')
     setTimeout(function newGame() {
-        $('.board').text('Game in Progress')
+        $('.board').html('<p>Game in Progress</p>')
         p1g = null
         p2g = null
         game.set({
@@ -335,14 +328,15 @@ function oneWins() {
 }
 
 function twoWins() {
+    $('.player2').removeClass('pink')
     p2w++
     p1l++
     renderGuess()
     renderWins()
-    $('.board').text(player2 + ' Wins!')
+    $('.board').html('<p>' + player2 + ' Wins!</p>')
 
     setTimeout(function newGame() {
-        $('.board').text('Game in Progress')
+        $('.board').html('<p>Game in Progress</p>')
         p1g = null
         p2g = null
         game.set({
@@ -358,12 +352,13 @@ function twoWins() {
 }
 
 function tie() {
+    $('.player2').removeClass('pink')
     renderGuess()
-    $('.board').text('There was a tie')
+    $('.board').html('<p>There was a tie</p>')
     setTimeout(function newGame() {
         p1g = null
         p2g = null
-        $('.board').text('Game in Progress')
+        $('.board').html('<p>Game in Progress</p>')
         game.set({
             playerOneGuess: p1g,
             playerTwoGuess: p2g,
@@ -381,7 +376,6 @@ $('.submit-text').on('submit', function(e) {
     e.preventDefault()
     var comment = $('.comment').val()
     $('.comment').val('')
-    console.log(comment)
     if (you === 'one' && playerTwoKey) {
         chat.push({
             comment: player1 + ': ' + comment
@@ -394,7 +388,6 @@ $('.submit-text').on('submit', function(e) {
 })
 
 chat.on('child_added', function(childSnapShot) {
-    console.log(childSnapShot.val().comment)
     var children = $('.chat-text').children().length
 
     $('.chat-text').append("<div class='chat-line'>" + childSnapShot.val().comment)
@@ -402,73 +395,7 @@ chat.on('child_added', function(childSnapShot) {
     if (children > 5) {
         $('.chat-text').children().first().remove()
     }
-
-  
-
-
 })
 
 
-// TODO(rick): Move this down with the other game play related functions. It is
-// only here to keep it close to the other changes.
-// NOTE(rick): Take as arguments the "connected" status of each player. This
-// helps us determine which player left and how to properly "reset" and update
-// the UI.
-// function ResetGame(playerOneConnected, playerTwoConnected)
-// {
-// 	if(playerOneConnected && !playerTwoConnected)
-// 	{
-// 		playerTwoExists = false;
-// 		playerTwoKey = "";
-// 		$("#player-2-name").text("Waiting for player 2 to join");
-// 		$(".items2").empty();
-//         players.set({
-//             player1: player1,
-//             player2: "",
-//             playerOneExists: playerOneExists,
-//             playerTwoExists: playerTwoExists,
-// 			playerOneKey: playerOneKey,
-// 			playerTwoKey: playerTwoKey
-//         })
-//         game.remove()
-// 	}
-	
-// 	else if(playerTwoConnected && !playerOneConnected)
-// 	{
-// 		playerOneExists = false;
-// 		playerOneKey = "";
-// 		$("#player-1-name").text("Waiting for player 1 to join");
-// 		$(".items1").empty();
-//         players.set({
-//             player1: "",
-//             player2: player2,
-//             playerOneExists: playerOneExists,
-//             playerTwoExists: playerTwoExists,
-// 			playerOneKey: playerOneKeyundefined,
-// 			playerTwoKey: playerTwoKey
-//         })
-//         game.remove()
-// 	}
-	
-// 	else
-// 	{
-// 		playerOneExists = false;
-// 		playerTwoExists = false;
-// 		playerOneKey = "";
-// 		playerTwoKey = "";
-// 		$("#player-1-name").text("Waiting for player 1");
-// 		$("#player-2-name").text("Waiting for player 2");
-// 		$(".items1").empty();
-// 		$(".items2").empty();
-//         players.remove();
-//         game.remove()
-// 	}
-// }
-
-
-//from add-player click
-// NOTE(rick): This user has added themselves to the game, store
-			// their connection key into the players document. Later one when
-			// someone joins their instance of the app will be able to know who
-			// the players are and behave as expected.
 
